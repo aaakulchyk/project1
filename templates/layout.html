@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="author" content="Andrei Kulchyk">
-    <title>{{ block title }}{{ endblock }}</title>
+    <title>{% block title %}{% endblock %}</title>
   </head>
   <body>
     <div class="container-fluid" id="wrapper">
       <div class="container" id="main">
-        {{ block content }}{{ endblock }}
+        {% block content %}{% endblock %}
       </div>
     </div>
   </body>
