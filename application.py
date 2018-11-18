@@ -33,7 +33,7 @@ def show_registration_form():
     return render_template('registration.html')
 
 
-@app.route('/registration/register', methods=['POST', 'GET'])
+@app.route('/registration/register', methods=['POST'])
 def register():
     # TODO: Read data from form
     salt = 'CS50W_project1'
@@ -41,10 +41,10 @@ def register():
         'username': request.form.get('username'),
         'email': request.form.get('email'),
     }
-    assert registration_data['username'] == 'laneboi', 'No username'
-    assert registration_data['email'] == 'solid.formalin@gmail.com', 'No email'
+    assert len(registration_data['username']) > 0, 'No username'
+    assert len(registration_data['email']) > 0, 'No email'
     password = hashlib.sha256(salt.encode() + request.form.get('password').encode()).hexdigest()
-    assert len(password) != 0, 'No password hash'
+    assert len(password) > 0, 'No password hash'
 
     # TODO: Check availability for registration data
     for key in registration_data.keys():
@@ -64,4 +64,4 @@ def register():
         return render_template('error.html', message='Please enter a password.')
 
     # TODO: Respond to the user
-    return render_template('registration.html')
+    return redirect('/', code=422)
