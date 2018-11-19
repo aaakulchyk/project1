@@ -53,19 +53,26 @@ def submit_registration():
 def login():
     global SALT
 
-    # Unless form is submitted, render login page
-    if request.method == 'GET':
-        return render_template('login.html')
-
     # When user submits the form, query the db
-    elif request.method == 'POST':
-        username = request.form.get('username')
-        password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
-        user_data = db.execute("SELECT * FROM users WHERE username = :username",
-                               {'username': username}).fetchone()
-        if password == user_data[-1]:
-            session['user'] = username
-            print(session['user'])
+    if request.method == 'POST':
+
+        # If user is authorized, log out
+        if session.get('user_id') is not None:
+            session.pop('user_id', None)
             return redirect(url_for('index'))
+
+        # Otherwise, log in
         else:
-            return render_template('error.html', message='Password doesn\'t match')
+            username = request.form.get('username')
+            password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
+            user_data = db.execute("SELECT * FROM users WHERE username = :username",
+                                   {'username': username}).fetchone()
+
+            # If password is correct, continue
+            if password == user_data[-1]:
+                session['user_id'] = user_data[0]
+                return redirect(url_for('index'))
+
+            # Else raise error
+            else:
+                return render_template('error.html', message='Password doesn\'t match')
