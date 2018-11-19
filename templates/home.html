@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'layout.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="row">
+    <p>Welcome to revobook!</p>
+    <a href="{{ url_for('show_registration_form') }}">Registration</a>
+</div>
+{% endblock %}
