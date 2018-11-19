@@ -40,7 +40,7 @@ def submit_registration():
     username = request.form.get('username')
     password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
     if db.execute("SELECT username FROM users WHERE username = :username",
-                  {'username': username}).rowcount == 0:
+        {'username': username}).rowcount == 0:
         db.execute("INSERT INTO users (username, password) VALUES (:username, :password)",
                    {'username': username,
                     'password': password})
