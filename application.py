@@ -1,10 +1,9 @@
 import os, hashlib
 
-from flask import Flask, session, render_template, request, redirect
+from flask import Flask, session, render_template, request, redirect, url_for
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-
 
 app = Flask(__name__)
 
@@ -22,10 +21,12 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
+# Define salt for passwords
+SALT = 'CS50W_project1'
 
 @app.route("/")
 def index():
-    return "Project 1: TODO"
+    return render_template('home.html')
 
 
 @app.route('/registration')
@@ -33,35 +34,17 @@ def show_registration_form():
     return render_template('registration.html')
 
 
-@app.route('/registration/register', methods=['POST'])
-def register():
-    # TODO: Read data from form
-    salt = 'CS50W_project1'
-    registration_data = {
-        'username': request.form.get('username'),
-        'email': request.form.get('email'),
-    }
-    assert len(registration_data['username']) > 0, 'No username'
-    assert len(registration_data['email']) > 0, 'No email'
-    password = hashlib.sha256(salt.encode() + request.form.get('password').encode()).hexdigest()
-    assert len(password) > 0, 'No password hash'
-
-    # TODO: Check availability for registration data
-    for key in registration_data.keys():
-        if db.execute("SELECT :key FROM users WHERE :key = :value", \
-                   {'key': key, 'value': registration_data[key]}).rowcount != 0:
-            return render_template('error.html', message='User with this {} already exists.'.format(key))
-
-    # TODO: Update database
-    if password:
-        db.execute("INSERT INTO users (username, email, password) VALUES (:username, :email, :password)", \
-                   {'username': registration_data['username'],
-                    'email': registration_data['email'],
-                    'password': password,
-                    })
+@app.route('/registration/submit', methods=['POST'])
+def submit_registration():
+    global SALT
+    username = request.form.get('username')
+    password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
+    if db.execute("SELECT username FROM users WHERE username = :username",
+                  {'username': username}).rowcount == 0:
+        db.execute("INSERT INTO users (username, password) VALUES (:username, :password)",
+                   {'username': username,
+                    'password': password})
         db.commit()
+        return redirect(url_for('index'))
     else:
-        return render_template('error.html', message='Please enter a password.')
-
-    # TODO: Respond to the user
-    return redirect('/', code=422)
+        return render_template('error.html', message='A user with this username already exists.')
