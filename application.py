@@ -4,7 +4,7 @@ from flask import Flask, session, render_template, request, redirect
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-
+from .models import *
 
 app = Flask(__name__)
 
@@ -81,4 +81,5 @@ def login():
                {'username': login_data['username'],
                 'password': login_data['password'],
                 }).rowcount == 1:
+        user = login_data['username']
         return render_template('login.html', message='Success!')
