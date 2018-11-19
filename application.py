@@ -48,3 +48,24 @@ def submit_registration():
         return redirect(url_for('index'))
     else:
         return render_template('error.html', message='A user with this username already exists.')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    global SALT
+
+    # Unless form is submitted, render login page
+    if request.method == 'GET':
+        return render_template('login.html')
+
+    # When user submits the form, query the db
+    elif request.method == 'POST':
+        username = request.form.get('username')
+        password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
+        user_data = db.execute("SELECT * FROM users WHERE username = :username",
+                               {'username': username}).fetchone()
+        if password == user_data[-1]:
+            session['user'] = username
+            print(session['user'])
+            return redirect(url_for('index'))
+        else:
+            return render_template('error.html', message='Password doesn\'t match')
