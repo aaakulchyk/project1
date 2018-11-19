@@ -25,7 +25,7 @@ db = scoped_session(sessionmaker(bind=engine))
 
 @app.route("/")
 def index():
-    return "Project 1: TODO"
+    return render_template('layout.html')
 
 
 @app.route('/registration')
@@ -48,13 +48,13 @@ def register():
 
     # TODO: Check availability for registration data
     for key in registration_data.keys():
-        if db.execute("SELECT :key FROM users WHERE :key = :value", \
+        if db.execute("SELECT :key FROM users WHERE :key = :value",
                    {'key': key, 'value': registration_data[key]}).rowcount != 0:
             return render_template('error.html', message='User with this {} already exists.'.format(key))
 
     # TODO: Update database
     if password:
-        db.execute("INSERT INTO users (username, email, password) VALUES (:username, :email, :password)", \
+        db.execute("INSERT INTO users (username, email, password) VALUES (:username, :email, :password)",
                    {'username': registration_data['username'],
                     'email': registration_data['email'],
                     'password': password,
@@ -65,3 +65,20 @@ def register():
 
     # TODO: Respond to the user
     return redirect('/', code=422)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    salt='CS50W_project1'
+
+    # TODO: Collect login data
+    login_data = {
+        'username': request.form.get('username'),
+        'password': hashlib.sha256(salt.encode() + request.form.get('password').encode()).hexdigest(),
+    }
+    print(login_data['password'])
+    # TODO: Check user data in database
+    if db.execute("SELECT * FROM users WHERE username = :username AND password = :password",
+               {'username': login_data['username'],
+                'password': login_data['password'],
+                }).rowcount == 1:
+        return render_template('login.html', message='Success!')
