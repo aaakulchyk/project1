@@ -29,25 +29,27 @@ def index():
     return render_template('home.html')
 
 
-@app.route('/registration')
-def show_registration_form():
-    return render_template('registration.html')
+@app.route('/registration', methods=['GET', 'POST'])
+def register():
+    # Just show registration form
+    if request.method == 'GET':
+        return render_template('registration.html')
 
+    # When the form is submitted
+    elif request.method == 'POST':
+        global SALT
+        username = request.form.get('username')
+        password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
+        if db.execute("SELECT username FROM users WHERE username = :username",
+                      {'username': username}).rowcount == 0:
+            db.execute("INSERT INTO users (username, password) VALUES (:username, :password)",
+                       {'username': username,
+                        'password': password})
+            db.commit()
+            return redirect(url_for('index'))
+        else:
+            return render_template('error.html', message='A user with this username already exists.')
 
-@app.route('/registration/submit', methods=['POST'])
-def submit_registration():
-    global SALT
-    username = request.form.get('username')
-    password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
-    if db.execute("SELECT username FROM users WHERE username = :username",
-        {'username': username}).rowcount == 0:
-        db.execute("INSERT INTO users (username, password) VALUES (:username, :password)",
-                   {'username': username,
-                    'password': password})
-        db.commit()
-        return redirect(url_for('index'))
-    else:
-        return render_template('error.html', message='A user with this username already exists.')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -2,7 +2,7 @@
 {% block title %}Registration{% endblock %}
 
 {% block content %}
-<form class="registration" action="{{ url_for('submit_registration') }}" method="post">
+<form class="registration" action="{{ url_for('register') }}" method="post">
   <div class="form-group registration-field">
     <label for="registration-username">Username</label>
     <input type="text" class="form-control" id="registration-username" aria-describedby="username" placeholder="Enter username" name="username">
