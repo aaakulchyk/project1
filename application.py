@@ -61,6 +61,7 @@ def login():
         # If user is authorized, log out
         if session.get('user_id') is not None:
             session.pop('user_id', None)
+            session.pop('username', None)
             return redirect(url_for('index'))
 
         # Otherwise, log in
@@ -73,6 +74,7 @@ def login():
             # If password is correct, continue
             if password == user_data[-1]:
                 session['user_id'] = user_data[0]
+                session['username'] = user_data[1]
                 return redirect(url_for('index'))
 
             # Else raise error
