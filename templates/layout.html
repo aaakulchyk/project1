@@ -30,16 +30,23 @@
                 <a class="nav-link" href="#">Books</a>
               </li>
             </ul>
-            <form class="form-inline my-2 my-lg-0" action="{{ url_for('login') }}" method="post">
-              {% if session['user_id'] %}
-              <p>{{ session['username'] }}</p>
-              <button type="submit" class="btn btn-outline-primary ml-2">Log out</button>
-              {% else %}
-              <input class="form-control mr-sm-2" type="text" aria-describedby="username" placeholder="Enter username" name="username">
-              <input class="form-control mr-sm-2" type="password" aria-describedby="password" placeholder="Enter password" name="password">
-              <button type="submit" class="btn btn-outline-primary">Log in</button>
-              {% endif %}
-            </form>
+            <div>
+              <form class="form-inline my-2 my-lg-0" action="{{ url_for('login') }}" method="post">
+                {% if session['user_id'] %}
+                <p>{{ session['username'] }}</p>
+                <button type="submit" class="btn btn-outline-primary ml-2">Log out</button>
+                {% else %}
+                <input class="form-control mr-sm-2" type="text" aria-describedby="username" placeholder="Enter username" name="username">
+                <input class="form-control mr-sm-2" type="password" aria-describedby="password" placeholder="Enter password" name="password">
+                <button type="submit" class="btn btn-outline-primary">Log in</button>
+                {% endif %}
+              </form>
+              {% if not session['user_id'] %}
+              <div>
+                <small>Don't have an account? <a href="{{ url_for('register') }}">Register</a></small>
+              </div>
+            {% endif %}
+            </div>
           </div>
         </nav>
       </header>
