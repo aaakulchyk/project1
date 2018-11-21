@@ -1,9 +1,10 @@
 import os, hashlib
 
-from flask import Flask, session, render_template, request, redirect, url_for
+from flask import Flask, session, render_template, request, redirect, url_for, abort
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+
 
 app = Flask(__name__)
 
@@ -21,8 +22,9 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
-# Define salt for passwords
+# Define globals for passwords
 SALT = 'CS50W_project1'
+PER_PAGE = 10
 
 @app.route("/")
 def index():
@@ -80,3 +82,17 @@ def login():
             # Else raise error
             else:
                 return render_template('error.html', message='Password doesn\'t match')
+
+@app.route('/search/', defaults={'page': 1})
+@app.route('/search/page/<int:page>')
+def search(page, methods=['GET', 'POST']):
+    query = request.args.get('search')
+    query = '%' + query + '%'
+
+    result = [item for item in db.execute("SELECT isbn, title, author FROM books WHERE isbn LIKE :q "
+                                          "OR title LIKE :q "
+                                          "OR author LIKE :q",
+                                          {'q': query})]
+    if not result and page != 1:
+        abort(404)
+    return render_template('search.html', result=result)

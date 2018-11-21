@@ -1,0 +1,13 @@
+{% extends 'layout.html' %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<div class="row">
+    {% for result_item in result %}
+    <div class="col-4">
+        <h3>{{ result_item[1] }}</h3>
+        <p>by {{ result_item[2] }}</p>
+        <p>ISBN: {{ result_item[0] }}</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

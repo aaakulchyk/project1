@@ -49,6 +49,10 @@
             </div>
           </div>
         </nav>
+          <form class="form-inline bg-light justify-content-center" action="{{ url_for('search') }}" id="search" method="get">
+            <input class="form-control mr-sm-2" type="text" aria-describedby="search" placeholder="Search" name="search">
+            <button type="submit" class="btn btn-outline-primary">Search</button>
+          </form>
       </header>
       <div class="container" id="main">
         {% block content %}{% endblock %}
