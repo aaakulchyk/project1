@@ -1,7 +1,8 @@
 {% extends 'layout.html' %}
 {% block title %}Home{% endblock %}
 {% block content %}
-<div class="row">
-    <p>Welcome to revobook!</p>
-</div>
+<form class="form-inline bg-light justify-content-center align-middle" action="{{ url_for('search') }}" id="search" method="get">
+    <input class="form-control mr-sm-2" type="text" aria-describedby="search" placeholder="Search" name="search">
+    <button type="submit" class="btn btn-outline-primary">Search</button>
+</form>
 {% endblock %}

@@ -1,6 +1,27 @@
 {% extends 'layout.html' %}
-{% block title %}Book{% endblock %}
-
+{% block title %}{{ book.title }}{% endblock %}
 {% block content %}
-
+<div class="row book">
+    <div class="col-3 book-img">
+        <img class="img-fluid" src="static/images/bookcover.png" alt="{{ book.title }} cover">
+    </div>
+    <div class="col-9 book-info">
+        <h2>{{ book.title }}</h2>
+        <p>by {{ book.author }}, {{ book.year }}</p>
+        <p>ISBN: {{ book.isbn }}</p>
+    </div>
+</div>
+{% if reviews %}
+<div class="row reviews">
+    {% for review in book.reviews %}
+    <div class="row review">
+        <div class="col-12 review-body">
+            <span class="review-item review-author">{{ review.author }}</span>
+            <span class="review-item review-rating">{{ review.rating }}</span>
+            <p class="review-item review-text">{{ review.text }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock %}

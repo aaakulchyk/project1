@@ -1,30 +1,23 @@
-from math import ceil
+class Book:
+	def __init__(self, isbn, title, author, review_ids):
+		self.isbn = isbn
+		self.title = title
+		self.author = author
+		self.review_ids = review_ids
+
+	def __str__(self):
+		return self.isbn
+
+	def count_reviews(self):
+		return len(self.review_ids)
 
 
-class Paginator:
-	def __init__(self, page, per_page, total):
-		self.page = page
-		self.per_page = per_page
-		self.total = total
+class Review:
+	def __init__(self, book_id, author, text):
+		self.book_id = book_id
+		self.author = author
+		self.text = text
+		self.rating = 0
 
-	@property
-	def pages(self):
-		return int(ceil(self.total / float(self.per_page)))
-
-	@property
-	def has_prev(self):
-		return self.page > 1
-
-	@property
-	def has_next(self):
-		return self.page < self.pages
-
-	def iter_pages(self, left_edge=2, left_current=2, right_current=5, right_edge=2):
-		last = 0
-		for num in range(1, self.pages + 1):
-			if num <= left_edge or (num > self.page - left_current - 1 and num < self.page + right_current) \
-					or num > self.pages - right_edge:
-				if last + 1 != num:
-					yield None
-				yield num
-				last = num
+	def __str__(self):
+		return self.text

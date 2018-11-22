@@ -4,12 +4,13 @@ from flask import Flask, session, render_template, request, redirect, url_for, a
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
+from models import Book
 
 
 app = Flask(__name__)
 
 # Check for environment variable
-DATABASE_URL = 'postgres://lfmoyqcmuvfoqn:c57be9c5cdd24c0fbe274db8c6626346f1ed8c47b3d8ec0317f73eae8d258337@ec2-50-19-249-121.compute-1.amazonaws.com:5432/d83lec9qlit9jv'
+os.putenv('DATABASE_URL', 'postgres://lfmoyqcmuvfoqn:c57be9c5cdd24c0fbe274db8c6626346f1ed8c47b3d8ec0317f73eae8d258337@ec2-50-19-249-121.compute-1.amazonaws.com:5432/d83lec9qlit9jv')
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
 
@@ -96,3 +97,13 @@ def search(page, methods=['GET', 'POST']):
     if not result and page != 1:
         abort(404)
     return render_template('search.html', result=result)
+
+@app.route('/books/<int:id>')
+def book(id):
+    result = db.execute("SELECT isbn, title, author, year FROM books WHERE id = :id", {'id': id})
+    for row in result:
+        book_data = dict(row)
+    reviews_list = db.execute("SELECT book_id, author_id, rating, text FROM reviews WHERE book_id = :id",
+                                        {'id': id})
+    reviews = [dict(review) for review in reviews_list]
+    return render_template('book.html', book=book_data, reviews=reviews)
