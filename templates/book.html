@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row book">
     <div class="col-3 book-img">
-        <img class="img-fluid" src="static/images/bookcover.png" alt="{{ book.title }} cover">
+        <img class="img-fluid" src="{{ url_for('static', filename='images/bookcover.png') }}" alt="{{ book.title }} cover">
     </div>
     <div class="col-9 book-info">
         <h2>{{ book.title }}</h2>
