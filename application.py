@@ -149,6 +149,8 @@ def goodreads_api_isbn(isbn):
 
 @app.route('/api/<isbn>')
 def revobook_api_isbn(isbn):
-    book_data = dict(db.execute('SELECT title, author, year, isbn, COUNT(reviews) AS "reviews_count", AVG(reviews.rating) AS "average_score" FROM books JOIN reviews ON reviews.book_id = books.id WHERE isbn = :isbn GROUP BY title, author, year, isbn', {'isbn': isbn}).first())
-    book_json = json.dumps(book_data, )
-    return render_template('error.html', message=book_json)
+    book_data = db.execute('SELECT title, author, year, isbn, COUNT(reviews) AS "reviews_count", AVG(reviews.rating) AS "average_score" FROM books JOIN reviews ON reviews.book_id = books.id WHERE isbn = :isbn GROUP BY title, author, year, isbn', {'isbn': isbn})
+    if book_data.first() is not None:
+        book_json = json.dumps(dict(book_data.first()), )
+        return render_template('error.html', message=book_json)
+    return render_template('error.html', message='We can\'t find a book with ISBN %s.' % (isbn))
