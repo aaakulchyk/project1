@@ -13,14 +13,20 @@
 </div>
 {% if session['user_id'] %}
 <label for="add-review">Add my review</label>
-<form class="add-review" id="add-review" action="add_review" method="post">
+<form class="add-review" id="add-review" action="/books/{{ book.id }}" method="post">
     <div class="form-group">
-        <label for="review-title">Title</label>
-        <input class="form-control mr-sm-2" id="review-title" type="text" aria-describedby="Review title" name="review-title">
+        <label for="review-rating">Rating for this book</label>
+        <select class="form-control" id="review-rating" name="review-rating">
+            <option>1</option>
+            <option>2</option>
+            <option>3</option>
+            <option>4</option>
+            <option>5</option>
+        </select>
     </div>
     <div class="form-group">
         <label for="review-text">Text</label>
-        <textarea class="form-control mr-sm-2" id="review-text" type="text" aria-describedby="Review text" name="review-text"></textarea>
+        <textarea required class="form-control mr-sm-2" id="review-text" aria-describedby="Review text" name="review-text" autocomplete="off" rows="6" cols="100" wrap="hard"></textarea>
     </div>
     <div class="form-group">
         <button class="btn btn-primary" type="submit">Add</button>
@@ -29,7 +35,7 @@
 {% endif %}
 {% if reviews %}
 <div class="row reviews">
-    {% for review in book.reviews %}
+    {% for review in reviews %}
     <div class="col-12 review-body">
         <span class="review-item review-author">{{ review.author }}</span>
         <span class="review-item review-rating">{{ review.rating }}</span>
