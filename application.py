@@ -93,6 +93,11 @@ def search(page, methods=['GET', 'POST']):
         abort(404)
     return render_template('search.html', result=result)
 
+def has_reviewed(user_id, book_id):
+    return db.execute("SELECT * FROM reviews WHERE author_id = :user_id AND book_id = :book_id",
+                          {'user_id': user_id,
+                           'book_id': book_id}) if user_id else None
+
 @app.route('/books/<int:id>', methods=['GET', 'POST'])
 def book(id):
     if request.method == 'GET':
@@ -106,22 +111,23 @@ def book(id):
             reviews_data = db.execute("SELECT book_id, author_id, rating, text, users.username FROM reviews JOIN users ON users.id = author_id WHERE book_id = :id",
                                                 {'id': id})
             reviews_list = [dict(review) for review in reviews_data]
-            for review in reviews_data:
-                review = dict(review)
-            print(reviews_list)
-            return render_template('book.html', book=book_data, reviews=reviews_list)
+            return render_template('book.html', book=book_data, reviews=reviews_list,
+                                   has_reviewed=has_reviewed(session.get('user_id'), id))
         else:
             return render_template('error.html', message='Sorry! We can\'t find this book in our library :(')
     # Submitting a form.
     elif request.method == 'POST':
-        # Check whether review is not empty.
-        review_text = request.form.get('review-text')
-        if review_text is not None:
-            # Add review.
-            db.execute("INSERT INTO reviews (book_id, author_id, rating, text) VALUES (:book_id, :author_id, :rating, :text)",
-                       {'book_id': id, 'author_id': session['user_id'], 'rating': request.form.get('review-rating'), 'text': review_text})
-            db.commit()
-            # Redirect to the same page.
-            return redirect('/books/' + str(id))
+        if not has_reviewed(session['user_id'], id):
+            # Check whether review is not empty.
+            review_text = request.form.get('review-text')
+            if review_text is not None:
+                # Add review.
+                db.execute("INSERT INTO reviews (book_id, author_id, rating, text) VALUES (:book_id, :author_id, :rating, :text)",
+                           {'book_id': id, 'author_id': session['user_id'], 'rating': request.form.get('review-rating'), 'text': review_text})
+                db.commit()
+                # Redirect to the same page.
+                return redirect(request.referrer)
+            else:
+                return render_template('error.html', message='Sorry! We can\'t add an empty review.')
         else:
-            return render_template('error.html', message='Sorry! We can\'t add an empty review.')
+            return render_template('error.html', message='You have already reviewed this book.')

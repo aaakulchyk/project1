@@ -1,4 +1,5 @@
 {% extends 'layout.html' %}
+{% block css %}<link rel="stylesheet" href="{{ url_for('static', filename='css/book.css') }}">{% endblock %}
 {% block title %}{{ book.title }}{% endblock %}
 {% block content %}
 <div class="row book">
@@ -12,6 +13,7 @@
     </div>
 </div>
 {% if session['user_id'] %}
+{% if not has_reviewed %}
 <label for="add-review">Add my review</label>
 <form class="add-review" id="add-review" action="/books/{{ book.id }}" method="post">
     <div class="form-group">
@@ -33,13 +35,16 @@
     </div>
 </form>
 {% endif %}
+{% else %}
+<p class="unauthorized-message">To be able to leave a review, log in.</p>
+{% endif %}
 {% if reviews %}
 <div class="row reviews">
     {% for review in reviews %}
     <div class="col-12 review-body">
         <span class="review-item review-author">{{ review.username }}</span>
         <span class="review-item review-rating">{{ review.rating }}</span>
-        <p class="review-item review-text">{{ review.text }}</p>
+        <pre class="review-item review-text">{{ review.text }}</pre>
     </div>
     {% endfor %}
 </div>

@@ -1,0 +1,9 @@
+.review-author::before {
+  content: "Review by ";
+}
+
+.review-rating::before {
+  content: "Rating: ";
+}
+
+/*# sourceMappingURL=book.css.map */
