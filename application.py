@@ -57,29 +57,24 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     global SALT
-
     # When user submits the form, query the db
     if request.method == 'POST':
-
         # If user is authorized, log out
         if session.get('user_id') is not None:
             session.pop('user_id', None)
             session.pop('username', None)
-            return redirect(url_for('index'))
-
+            return redirect(request.referrer)
         # Otherwise, log in
         else:
             username = request.form.get('username')
             password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
             user_data = db.execute("SELECT * FROM users WHERE username = :username",
                                    {'username': username}).fetchone()
-
             # If password is correct, continue
             if password == user_data[-1]:
                 session['user_id'] = user_data[0]
                 session['username'] = user_data[1]
-                return redirect(url_for('index'))
-
+                return redirect(request.referrer)
             # Else raise error
             else:
                 return render_template('error.html', message='Password doesn\'t match')
