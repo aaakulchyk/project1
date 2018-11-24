@@ -100,10 +100,16 @@ def search(page, methods=['GET', 'POST']):
 
 @app.route('/books/<int:id>')
 def book(id):
+    # Fetch book with a given id.
     result = db.execute("SELECT isbn, title, author, year FROM books WHERE id = :id", {'id': id})
+    # Create a dict containing book information.
     for row in result:
         book_data = dict(row)
-    reviews_list = db.execute("SELECT book_id, author_id, rating, text FROM reviews WHERE book_id = :id",
-                                        {'id': id})
-    reviews = [dict(review) for review in reviews_list]
-    return render_template('book.html', book=book_data, reviews=reviews)
+    if book_data:
+        # Collect reviews related to the book.
+        reviews_data = db.execute("SELECT book_id, author_id, rating, text FROM reviews WHERE book_id = :id",
+                                            {'id': id})
+        reviews_list = [dict(review) for review in reviews_data]
+        return render_template('book.html', book=book_data, reviews=reviews_list)
+    else:
+        return render_template('error.html', message='Sorry! We can\'t find this book in our library :(')
