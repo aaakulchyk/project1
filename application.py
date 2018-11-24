@@ -1,11 +1,9 @@
-import os, hashlib
+import os, hashlib, requests, json, decimal
 
-from flask import Flask, session, render_template, request, redirect, url_for, abort
+from flask import Flask, session, render_template, request, redirect, url_for, abort, jsonify
 from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
-from models import Book
-
 
 app = Flask(__name__)
 
@@ -23,9 +21,16 @@ Session(app)
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
-# Define globals for passwords
+# Modify JSONEncoder
+JSONEncoder_default = json.JSONEncoder.default
+def JSONEncoder_with_floats(self, o):
+    if isinstance(o, decimal.Decimal): return str(o)
+    return JSONEncoder_default(self, o)
+json.JSONEncoder.default = JSONEncoder_with_floats
+
+# Define globals
 SALT = 'CS50W_project1'
-PER_PAGE = 10
+API_KEY = 'siVaCX2IYx6hhirAVyQpg'
 
 @app.route("/")
 def index():
@@ -101,33 +106,49 @@ def has_reviewed(user_id, book_id):
 @app.route('/books/<int:id>', methods=['GET', 'POST'])
 def book(id):
     if request.method == 'GET':
-        # Fetch book with a given id.
-        result = db.execute("SELECT id, isbn, title, author, year FROM books WHERE id = :id", {'id': id})
-        # Create a dict containing book information.
+        # Fetch book with a given id
+        result = db.execute("SELECT id, isbn FROM books WHERE id = :id", {'id': id})
+        # Create a dict containing book information
         for row in result:
             book_data = dict(row)
         if book_data:
-            # Collect reviews related to the book.
+            # Collect reviews related to the book
             reviews_data = db.execute("SELECT book_id, author_id, rating, text, users.username FROM reviews JOIN users ON users.id = author_id WHERE book_id = :id",
                                                 {'id': id})
             reviews_list = [dict(review) for review in reviews_data]
+            # Collect data from Goodreads API
+            book_data = goodreads_api_isbn(book_data['isbn'])['books'][0]
             return render_template('book.html', book=book_data, reviews=reviews_list,
                                    has_reviewed=has_reviewed(session.get('user_id'), id))
         else:
             return render_template('error.html', message='Sorry! We can\'t find this book in our library :(')
-    # Submitting a form.
+    # Submitting a form
     elif request.method == 'POST':
         if not has_reviewed(session['user_id'], id):
-            # Check whether review is not empty.
+            # Check whether review is not empty
             review_text = request.form.get('review-text')
             if review_text is not None:
-                # Add review.
+                # Add review
                 db.execute("INSERT INTO reviews (book_id, author_id, rating, text) VALUES (:book_id, :author_id, :rating, :text)",
                            {'book_id': id, 'author_id': session['user_id'], 'rating': request.form.get('review-rating'), 'text': review_text})
                 db.commit()
-                # Redirect to the same page.
+                # Redirect to the same page
                 return redirect(request.referrer)
             else:
                 return render_template('error.html', message='Sorry! We can\'t add an empty review.')
         else:
             return render_template('error.html', message='You have already reviewed this book.')
+
+def goodreads_api_isbn(isbn):
+    goodreads_api_res = (requests.get('https://www.goodreads.com/book/review_counts.json',
+                                          params={'key': API_KEY, 'isbns': isbn})).json()
+    revobook_res = db.execute("SELECT title, author, year FROM books WHERE isbn = :isbn", {'isbn': isbn}).first()
+    goodreads_api_res['books'][0].update(revobook_res)
+    print(goodreads_api_res)
+    return goodreads_api_res
+
+@app.route('/api/<isbn>')
+def revobook_api_isbn(isbn):
+    book_data = dict(db.execute('SELECT title, author, year, isbn, COUNT(reviews) AS "reviews_count", AVG(reviews.rating) AS "average_score" FROM books JOIN reviews ON reviews.book_id = books.id WHERE isbn = :isbn GROUP BY title, author, year, isbn', {'isbn': isbn}).first())
+    book_json = json.dumps(book_data, )
+    return render_template('error.html', message=book_json)

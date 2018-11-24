@@ -7,9 +7,11 @@
         <img class="img-fluid" src="{{ url_for('static', filename='images/bookcover.png') }}" alt="{{ book.title }} cover">
     </div>
     <div class="col-9 book-info">
-        <h2>{{ book.title }}</h2>
-        <p>by {{ book.author }}, {{ book.year }}</p>
-        <p>ISBN: {{ book.isbn }}</p>
+        <h2 class="book-info-item">{{ book.title }}</h2>
+        <p class="book-info-item">by {{ book.author }}, {{ book.year }}</p>
+        <p class="book-info-item">ISBN: {{ book.isbn }}</p>
+        <p class="book-info-item">Reviews on Goodreads: {{ book.reviews_count }}</p>
+        <p class="book-info-item">Rating of this book on Goodreads: {{ book.average_rating }}</p>
     </div>
 </div>
 {% if session['user_id'] %}
