@@ -108,9 +108,11 @@ def book(id):
             book_data = dict(row)
         if book_data:
             # Collect reviews related to the book.
-            reviews_data = db.execute("SELECT book_id, author_id, rating, text FROM reviews WHERE book_id = :id",
+            reviews_data = db.execute("SELECT book_id, author_id, rating, text, users.username FROM reviews JOIN users ON users.id = author_id WHERE book_id = :id",
                                                 {'id': id})
             reviews_list = [dict(review) for review in reviews_data]
+            for review in reviews_data:
+                review = dict(review)
             print(reviews_list)
             return render_template('book.html', book=book_data, reviews=reviews_list)
         else:

@@ -37,7 +37,7 @@
 <div class="row reviews">
     {% for review in reviews %}
     <div class="col-12 review-body">
-        <span class="review-item review-author">{{ review.author }}</span>
+        <span class="review-item review-author">{{ review.username }}</span>
         <span class="review-item review-rating">{{ review.rating }}</span>
         <p class="review-item review-text">{{ review.text }}</p>
     </div>
