@@ -5,32 +5,39 @@ from flask_session import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 
+
 app = Flask(__name__)
+
 
 # Check for environment variable
 os.putenv('DATABASE_URL', 'postgres://lfmoyqcmuvfoqn:c57be9c5cdd24c0fbe274db8c6626346f1ed8c47b3d8ec0317f73eae8d258337@ec2-50-19-249-121.compute-1.amazonaws.com:5432/d83lec9qlit9jv')
 if not os.getenv("DATABASE_URL"):
     raise RuntimeError("DATABASE_URL is not set")
 
+
 # Configure session to use filesystem
 app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+
 # Set up database
 engine = create_engine(os.getenv("DATABASE_URL"))
 db = scoped_session(sessionmaker(bind=engine))
 
-# Modify JSONEncoder
+
+# Modify JSONEncoder to treat AVG(reviews.rating) properly
 JSONEncoder_default = json.JSONEncoder.default
 def JSONEncoder_with_floats(self, o):
     if isinstance(o, decimal.Decimal): return str(o)
     return JSONEncoder_default(self, o)
 json.JSONEncoder.default = JSONEncoder_with_floats
 
+
 # Define globals
 SALT = 'CS50W_project1'
 API_KEY = 'siVaCX2IYx6hhirAVyQpg'
+
 
 @app.route("/")
 def index():
@@ -39,6 +46,7 @@ def index():
 
 @app.route('/registration', methods=['GET', 'POST'])
 def register():
+
     # Just show registration form
     if request.method == 'GET':
         return render_template('registration.html')
@@ -62,6 +70,7 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     global SALT
+
     # When user submits the form, query the db
     if request.method == 'POST':
         # If user is authorized, log out
@@ -69,20 +78,24 @@ def login():
             session.pop('user_id', None)
             session.pop('username', None)
             return redirect(request.referrer)
+
         # Otherwise, log in
         else:
             username = request.form.get('username')
             password = hashlib.sha256(SALT.encode() + request.form.get('password').encode()).hexdigest()
             user_data = db.execute("SELECT * FROM users WHERE username = :username",
                                    {'username': username}).fetchone()
+
             # If password is correct, continue
             if password == user_data[-1]:
                 session['user_id'] = user_data[0]
                 session['username'] = user_data[1]
                 return redirect(request.referrer)
+
             # Else raise error
             else:
                 return render_template('error.html', message='Password doesn\'t match')
+
 
 @app.route('/search/', defaults={'page': 1})
 @app.route('/search/page/<int:page>')
@@ -98,20 +111,25 @@ def search(page, methods=['GET', 'POST']):
         abort(404)
     return render_template('search.html', result=result)
 
+
 def has_reviewed(user_id, book_id):
     return db.execute("SELECT * FROM reviews WHERE author_id = :user_id AND book_id = :book_id",
                           {'user_id': user_id,
                            'book_id': book_id}) if user_id else None
 
+
 @app.route('/books/<int:id>', methods=['GET', 'POST'])
 def book(id):
     if request.method == 'GET':
+
         # Fetch book with a given id
         result = db.execute("SELECT id, isbn FROM books WHERE id = :id", {'id': id})
+
         # Create a dict containing book information
         for row in result:
             book_data = dict(row)
         if book_data:
+
             # Collect reviews related to the book
             reviews_data = db.execute("SELECT book_id, author_id, rating, text, users.username FROM reviews JOIN users ON users.id = author_id WHERE book_id = :id",
                                                 {'id': id})
@@ -122,22 +140,27 @@ def book(id):
                                    has_reviewed=has_reviewed(session.get('user_id'), id))
         else:
             return render_template('error.html', message='Sorry! We can\'t find this book in our library :(')
+
     # Submitting a form
     elif request.method == 'POST':
         if not has_reviewed(session['user_id'], id):
+
             # Check whether review is not empty
             review_text = request.form.get('review-text')
             if review_text is not None:
+
                 # Add review
                 db.execute("INSERT INTO reviews (book_id, author_id, rating, text) VALUES (:book_id, :author_id, :rating, :text)",
                            {'book_id': id, 'author_id': session['user_id'], 'rating': request.form.get('review-rating'), 'text': review_text})
                 db.commit()
+
                 # Redirect to the same page
                 return redirect(request.referrer)
             else:
                 return render_template('error.html', message='Sorry! We can\'t add an empty review.')
         else:
             return render_template('error.html', message='You have already reviewed this book.')
+
 
 def goodreads_api_isbn(isbn):
     goodreads_api_res = (requests.get('https://www.goodreads.com/book/review_counts.json',
@@ -147,10 +170,11 @@ def goodreads_api_isbn(isbn):
     print(goodreads_api_res)
     return goodreads_api_res
 
+
 @app.route('/api/<isbn>')
 def revobook_api_isbn(isbn):
     book_data = db.execute('SELECT title, author, year, isbn, COUNT(reviews) AS "reviews_count", AVG(reviews.rating) AS "average_score" FROM books JOIN reviews ON reviews.book_id = books.id WHERE isbn = :isbn GROUP BY title, author, year, isbn', {'isbn': isbn})
     if book_data.first() is not None:
         book_json = json.dumps(dict(book_data.first()), )
         return render_template('error.html', message=book_json)
-    return render_template('error.html', message='We can\'t find a book with ISBN %s.' % (isbn))
+    return render_template('error.html', message='We can\'t find a book with ISBN %s.' % isbn)
